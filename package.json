@@ -1,0 +1,45 @@
+{
+  "name": "borough",
+  "version": "0.0.1",
+  "description": "Borough",
+  "main": "borough.js",
+  "scripts": {
+    "test": "lab -v",
+    "style": "eslint ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pgte/borough.git"
+  },
+  "author": "pgte",
+  "bugs": {
+    "url": "https://github.com/pgte/borough/issues"
+  },
+  "homepage": "https://github.com/pgte/borough#readme",
+  "devDependencies": {
+    "code": "^4.0.0",
+    "eslint": "^3.6.0",
+    "eslint-config-standard": "^6.0.1",
+    "eslint-plugin-promise": "^2.0.1",
+    "eslint-plugin-standard": "^2.0.0",
+    "lab": "^11.0.1",
+    "memdown": "^1.2.2",
+    "pre-commit": "^1.1.3"
+  },
+  "dependencies": {
+    "async": "^2.0.1",
+    "clone-deep": "^0.2.4",
+    "debug": "^2.2.0",
+    "deepmerge": "^0.2.10",
+    "freeport": "^1.0.5",
+    "multiaddr": "^2.0.3",
+    "network-address": "^1.1.0",
+    "once": "^1.4.0",
+    "skiff": "^1.6.0",
+    "upring": "^0.10.1"
+  },
+  "pre-commit": [
+    "style",
+    "test"
+  ]
+}
