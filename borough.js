@@ -263,12 +263,17 @@ class Borough extends EventEmitter {
     })
   }
 
-  leavePartition (partition) {
+  leavePartition (partition, done) {
     const node = this._partitions[partition]
     if (node) {
-      node.removeAllListeners()
-      node.stop()
       delete this._partitions[partition]
+      node.then(node => {
+        node.removeAllListeners()
+        node.stop(done)
+      },
+      done)
+    } else {
+      process.nextTick(done)
     }
   }
 
