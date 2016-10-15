@@ -74,7 +74,7 @@ describe('borough cluster topology changes', () => {
       } else {
         partition.put('a', lastValue, err => {
           timers.clearTimeout(timeout)
-          if (err) {
+          if (err) {
             console.error(err.stack)
           }
           expect(!err).to.be.true()
@@ -143,5 +143,4 @@ describe('borough cluster topology changes', () => {
     expect(counter).to.be.least(minimum)
     done()
   })
-
 })
