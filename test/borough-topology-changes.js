@@ -18,7 +18,9 @@ const CLIENT_TIMEOUT_MS = 10000 // TODO: take this down
 describe('borough cluster topology changes', () => {
   let working = true
   let baseNode
-  let nodes = [0, 1, 2, 3]
+  let nodes = [0, 1, 2, 3, 4]
+  let peerCount
+  let counter = 0
 
   function onRequest (req, reply) {
     const part = req.partition
@@ -47,7 +49,6 @@ describe('borough cluster topology changes', () => {
 
   before(done => {
     let lastValue
-    let counter = 0
 
     const partition = baseNode.partition('partition 1')
     request()
@@ -73,6 +74,9 @@ describe('borough cluster topology changes', () => {
       } else {
         partition.put('a', lastValue, err => {
           timers.clearTimeout(timeout)
+          if (err) {
+            console.error(err.stack)
+          }
           expect(!err).to.be.true()
           process.nextTick(request)
         })
@@ -122,14 +126,22 @@ describe('borough cluster topology changes', () => {
       done)
   })
 
-  // it('waits a bit', { timeout: 6000}, done => timers.setTimeout(done, 5000))
+  it('waits a bit', {timeout: 7000}, done => timers.setTimeout(done, 6000))
 
-  it('partition has 2 peers', done => {
+  it('partition has only 3 nodes', done => {
     baseNode.partition('partition 1').info((err, info) => {
       expect(!err).to.be.true()
       expect(info.source).to.match(/^\/ip4\/.*\/p\/partition 1$/)
-      expect(info.peers.length).to.be.least(2)
+      peerCount = info.peers.length
+      expect(peerCount).to.equal(3)
       done()
     })
   })
+
+  it('a big amount of requests were performed', done => {
+    const minimum = 1000 * nodes.length
+    expect(counter).to.be.least(minimum)
+    done()
+  })
+
 })
