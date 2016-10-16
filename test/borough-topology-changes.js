@@ -67,6 +67,10 @@ describe('borough cluster topology changes', () => {
       if (isGet) {
         partition.get('a', (err, resp) => {
           timers.clearTimeout(timeout)
+          if (err) {
+            return handleError(err)
+          }
+          process.stdout.write('.')
           expect(err).to.be.null()
           expect(resp).to.equal(lastValue)
           process.nextTick(request)
@@ -75,15 +79,25 @@ describe('borough cluster topology changes', () => {
         partition.put('a', lastValue, err => {
           timers.clearTimeout(timeout)
           if (err) {
-            console.error(err.stack)
+            return handleError()
           }
-          expect(!err).to.be.true()
+          process.stdout.write('.')
           process.nextTick(request)
         })
       }
 
       function onTimeout () {
-        throw new Error(`client timeout after ${counter} requests`)
+        handleError(new Error(`client timeout after ${counter} requests`))
+      }
+
+      function handleError (err) {
+        console.error(err.stack)
+        partition.info((err, info) => {
+          if (info) {
+            console.log('info:\n', info)
+          }
+          throw err
+        })
       }
     }
   })
@@ -106,11 +120,12 @@ describe('borough cluster topology changes', () => {
       done)
   })
 
-  it('can rail in clients', {timeout: (nodes.length * 2) * 11000}, done => {
+  it('can rail in nodes', {timeout: (nodes.length * 2) * 11000}, done => {
     async.eachSeries(
       nodes,
       (index, done) => {
         timers.setTimeout(() => {
+          console.log('NEW NODE %d\n\n\n\n\n', index)
           const newNode = nodes[index] = Borough({
             base: [baseNode.whoami()],
             subnode: {
