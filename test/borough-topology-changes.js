@@ -13,12 +13,12 @@ const async = require('async')
 
 const Borough = require('../')
 
-const CLIENT_TIMEOUT_MS = 10000 // TODO: take this down
+const CLIENT_TIMEOUT_MS = 15000 // TODO: take this down
 
 describe('borough cluster topology changes', () => {
   let working = true
   let baseNode
-  let nodes = [0, 1, 2, 3, 4]
+  let nodes = [0, 1, 2, 3, 4, 5, 6]
   let peerCount
   let counter = 0
 
@@ -79,7 +79,7 @@ describe('borough cluster topology changes', () => {
         partition.put('a', lastValue, err => {
           timers.clearTimeout(timeout)
           if (err) {
-            return handleError()
+            return handleError(err)
           }
           process.stdout.write('.')
           process.nextTick(request)

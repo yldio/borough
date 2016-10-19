@@ -128,8 +128,10 @@ class Borough extends EventEmitter {
 
   _stopCluster (done) {
     debug('stopping cluster..')
+    console.log('stopping cluster..')
     this._cluster.stop(err => {
       debug('cluster stopped', err)
+      console.log('cluster stopped', err)
       done(err)
     })
   }
