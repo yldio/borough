@@ -36,7 +36,7 @@
     "network-address": "^1.1.0",
     "once": "^1.4.0",
     "skiff": "^1.7.0",
-    "upring": "^0.10.1"
+    "upring": "^0.11.0"
   },
   "pre-commit": [
     "style",
