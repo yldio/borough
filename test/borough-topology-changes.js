@@ -158,4 +158,34 @@ describe('borough cluster topology changes', () => {
     expect(counter).to.be.least(minimum)
     done()
   })
+
+  return;
+
+  it('rails out nodes', {timeout: (nodes.length * 2) * 11000}, done => {
+    async.eachSeries(
+      nodes.slice(1), // all but the first node
+      (node, done) => {
+        timers.setTimeout(() => {
+          baseNode.partition('partition 1').info((err, info) => {
+            if (err) {
+              throw rr
+            } else {
+              console.log('partition info:\n', info)
+            }
+          })
+          console.log('stopping node...\n\n\n')
+          node.stop(err => {
+            if (err) {
+              done(err)
+            } else {
+              nodes = nodes.filter(n => n !== node)
+              done()
+            }
+          })
+        }, 10000)
+      },
+      done)
+  })
+
+  it('waits a bit', {timeout: CLIENT_TIMEOUT_MS + 1000}, done => timers.setTimeout(done, CLIENT_TIMEOUT_MS + 500))
 })
