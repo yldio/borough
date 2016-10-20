@@ -101,6 +101,7 @@ describe('borough cluster topology changes', () => {
       function onTimeout () {
         console.error('REQUEST TIMEOUT')
         handleError(new Error(`client timeout after ${counter} requests`))
+        process.exit(1)
       }
 
       function handleError (err) {
@@ -172,21 +173,14 @@ describe('borough cluster topology changes', () => {
     done()
   })
 
-  return;
-
   it('rails out nodes', {timeout: (nodes.length * 2) * 11000}, done => {
+    let count = nodes.length + 1
     async.eachSeries(
       nodes.slice(1), // all but the first node
       (node, done) => {
         timers.setTimeout(() => {
-          baseNode.partition('partition 1').info((err, info) => {
-            if (err) {
-              throw rr
-            } else {
-              console.log('partition info:\n', info)
-            }
-          })
-          console.log('stopping node...\n\n\n')
+          count --
+          console.log('\n\nstopping node %d...\n\n\n', count)
           node.stop(err => {
             if (err) {
               done(err)
