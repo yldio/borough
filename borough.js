@@ -151,7 +151,7 @@ class Borough extends EventEmitter {
 
   _reconfigurePartition (partition) {
     debug('%s: reconfiguring partition %s', this.whoami(), partition)
-    this.partitionSubnode(partition, false, (err, subnode) => {
+    this.partitionSubnode(partition, {}, (err, subnode) => {
       if (err) {
         this.emit('warning', err)
       } else {
@@ -198,12 +198,12 @@ class Borough extends EventEmitter {
       })
   }
 
-  partitionSubnode (partition, forceRemotes, done) {
-    debug('node for partition %j, force remotes = %j', partition, forceRemotes)
+  partitionSubnode (partition, options, done) {
+    debug('node for partition %j, options = %j', partition, options)
     const subnode = this._partitions[partition]
     if (!subnode) {
       debug('does not exist yet, creating partition subnode for partition %s', partition)
-      this._createPartitionSubnode(partition, forceRemotes, err => {
+      this._createPartitionSubnode(partition, options, err => {
         if (err) {
           debug('error creating partition subnode:', err)
           this.emit('warning', err)
@@ -228,7 +228,7 @@ class Borough extends EventEmitter {
   }
 
   localPartitionInfo (partition, done) {
-    this.partitionSubnode(partition, false, (err, subnode) => {
+    this.partitionSubnode(partition, {}, (err, subnode) => {
       if (err) {
         done(err)
       } else {
@@ -246,53 +246,62 @@ class Borough extends EventEmitter {
     })
   }
 
-  _createPartitionSubnode (partition, forceRemotes, done) {
+  _createPartitionSubnode (partition, options, done) {
     debug('%s: create partition subnode: %s', this.whoami(), partition)
+    const self = this
 
     this._partitions[partition] = new Promise((resolve, reject) => {
       debug('%s: getting partition subnode addresses..', this.whoami())
-      this.partitionSubnodeAddresses(partition, (err, peers) => {
-        debug('%s: partition subnode addresses result: err = %j, peers = %j', this.whoami(), err && err.message, peers)
-        if (err) {
-          reject(err)
-          done(err)
-        } else {
-          debug('%s: peer subnode addresses for partition %s: %j', this.whoami(), partition, peers)
-          const options = merge(this._options.subnode, { peers })
-          const subnode = new Subnode(
-            this,
-            this._address,
-            partition,
-            this._network,
-            this._cluster,
-            options)
-
-          subnode.on('warning', this.emit.bind(this, 'warning'))
-
-          debug('%s: starting node for partition %s...', this.whoami(), partition)
-
-          const shouldBeLeader = (peers.indexOf(subnode.id) === 0)
-          if (shouldBeLeader) {
-            debug('%s: I should be leader of partition %s', this.whoami(), partition)
+      if (options.peers) {
+        create(options.peers)
+      } else {
+        this.partitionSubnodeAddresses(partition, (err, peers) => {
+          debug('%s: partition subnode addresses result: err = %j, peers = %j', this.whoami(), err && err.message, peers)
+          if (err) {
+            reject(err)
+            done(err)
+          } else {
+            create(peers)
           }
-          const startOptions = {
-            waitForState: shouldBeLeader ? 'leader' : 'weakened',
-            weakenDurationMS: this._options.secondarySubnodeWeakenAtStartupMS,
-            forceRemotes
-          }
+        })
+      }
 
-          subnode.start(startOptions, err => {
-            debug('%s: subnode for partition %s started', this.whoami(), partition)
-            if (err) {
-              reject(err)
-              done(err)
-            } else {
-              resolve(subnode)
-              done(null, subnode)
-            }
-          })
+      function create(peers) {
+        debug('%s: peer subnode addresses for partition %s: %j', self.whoami(), partition, peers)
+        const options = merge(self._options.subnode, { peers })
+        const subnode = new Subnode(
+          self,
+          self._address,
+          partition,
+          self._network,
+          self._cluster,
+          options)
+
+        subnode.on('warning', self.emit.bind(self, 'warning'))
+
+        debug('%s: starting node for partition %s...', self.whoami(), partition)
+
+        const shouldBeLeader = (peers.indexOf(subnode.id) === 0)
+        if (shouldBeLeader) {
+          debug('%s: I should be leader of partition %s', self.whoami(), partition)
         }
-      })
+        const startOptions = {
+          waitForState: shouldBeLeader ? 'leader' : 'weakened',
+          weakenDurationMS: self._options.secondarySubnodeWeakenAtStartupMS,
+          forceRemotes: options.forceRemotes
+        }
+
+        subnode.start(startOptions, err => {
+          debug('%s: subnode for partition %s started', self.whoami(), partition)
+          if (err) {
+            reject(err)
+            done(err)
+          } else {
+            resolve(subnode)
+            done(null, subnode)
+          }
+        })
+      }
     })
   }
 
@@ -323,7 +332,7 @@ class Borough extends EventEmitter {
 
   localCommand (partition, command, done) {
     debug('%s: local command (partition = %j, command = %j)', this.whoami(), partition, command)
-    this.partitionSubnode(partition, true, (err, subnode) => {
+    this.partitionSubnode(partition, {forceRemotes: true}, (err, subnode) => {
       if (err) {
         done(err)
       } else {
@@ -334,7 +343,7 @@ class Borough extends EventEmitter {
 
   localUserRequest (partition, req, reply) {
     debug('%s: local user request (partition = %j, req = %j)', this.whoami(), partition, req)
-    this.partitionSubnode(partition, true, (err, subnode) => {
+    this.partitionSubnode(partition, {forceRemotes: true}, (err, subnode) => {
       if (err) {
         reply(err)
       } else {

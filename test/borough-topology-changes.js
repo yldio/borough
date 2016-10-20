@@ -55,7 +55,7 @@ describe('borough cluster topology changes', () => {
     timers.setInterval(() => {
       partition.info((err, info) => {
         if (err) {
-          throw err
+          console.error('Error getting info:', err.message)
         } else {
           const peers = info.subnode.peers
           console.log('\n%d peers. peers: %j', peers.length, peers)
@@ -100,18 +100,8 @@ describe('borough cluster topology changes', () => {
 
       function onTimeout () {
         console.error('REQUEST TIMEOUT')
-        handleError(new Error(`client timeout after ${counter} requests`))
-        process.exit(1)
-      }
-
-      function handleError (err) {
-        console.error(err.stack)
-        partition.info((err, info) => {
-          if (info) {
-            console.log('info:\n', info)
-          }
-          throw err
-        })
+        throw new Error('request timeout')
+        // process.exit(1)
       }
     }
   })
