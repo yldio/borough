@@ -160,7 +160,7 @@ class Borough extends EventEmitter {
     })
   }
 
-  _partitionSubnodeAddresses (partition, done) {
+  partitionSubnodeAddresses (partition, done) {
     const nodeAddresses = this._cluster.nodesForPartition(partition)
     debug('%s: node addresses for partition %s: %j', this.whoami(), partition, nodeAddresses)
     async.map(
@@ -170,6 +170,28 @@ class Borough extends EventEmitter {
         debug('%s: subnode addresses result: err = %j, addresses = %j', err && err.message, addresses)
         if (!err && addresses) {
           done(null, addresses.filter(a => !!a))
+        } else {
+          done(err)
+        }
+      })
+  }
+
+  partitionPeers (partition, done) {
+    const nodeAddresses = this._cluster.nodesForPartition(partition)
+    debug('%s: node addresses for partition %s: %j', this.whoami(), partition, nodeAddresses)
+    async.map(
+      nodeAddresses,
+      this._cluster.remotePartitionAddress.bind(this._cluster, partition),
+      (err, addresses) => {
+        debug('%s: subnode addresses result: err = %j, addresses = %j', err && err.message, addresses)
+        if (!err && addresses) {
+          const peers = addresses.map((addr, index) => {
+            return {
+              address: nodeAddresses[index],
+              skiff: addr
+            }
+          })
+          done(null, peers)
         } else {
           done(err)
         }
@@ -210,7 +232,16 @@ class Borough extends EventEmitter {
       if (err) {
         done(err)
       } else {
-        subnode.info(done)
+        subnode.info((err, info) => {
+          if (err) {
+            done(err)
+          } else {
+            done(null, {
+              node: this.whoami(),
+              subnode: info
+            })
+          }
+        })
       }
     })
   }
@@ -220,7 +251,7 @@ class Borough extends EventEmitter {
 
     this._partitions[partition] = new Promise((resolve, reject) => {
       debug('%s: getting partition subnode addresses..', this.whoami())
-      this._partitionSubnodeAddresses(partition, (err, peers) => {
+      this.partitionSubnodeAddresses(partition, (err, peers) => {
         debug('%s: partition subnode addresses result: err = %j, peers = %j', this.whoami(), err && err.message, peers)
         if (err) {
           reject(err)

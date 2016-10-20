@@ -13,12 +13,12 @@ const async = require('async')
 
 const Borough = require('../')
 
-const CLIENT_TIMEOUT_MS = 15000 // TODO: take this down
+const CLIENT_TIMEOUT_MS = 10000 // TODO: take this down
 
 describe('borough cluster topology changes', () => {
   let working = true
   let baseNode
-  let nodes = [0, 1, 2, 3, 4, 5, 6]
+  let nodes = [0, 1, 2, 3, 4, 5, 6, 7, 8]
   let peerCount
   let counter = 0
 
@@ -51,6 +51,18 @@ describe('borough cluster topology changes', () => {
     let lastValue
 
     const partition = baseNode.partition('partition 1')
+
+    timers.setInterval(() => {
+      partition.info((err, info) => {
+        if (err) {
+          throw err
+        } else {
+          const peers = info.subnode.peers
+          console.log('\n%d peers. peers: %j', peers.length, peers)
+        }
+      })
+    }, 1000)
+
     request()
     done()
 
@@ -87,6 +99,7 @@ describe('borough cluster topology changes', () => {
       }
 
       function onTimeout () {
+        console.error('REQUEST TIMEOUT')
         handleError(new Error(`client timeout after ${counter} requests`))
       }
 
@@ -141,13 +154,13 @@ describe('borough cluster topology changes', () => {
       done)
   })
 
-  it('waits a bit', {timeout: 7000}, done => timers.setTimeout(done, 6000))
+  it('waits a bit', {timeout: 12000}, done => timers.setTimeout(done, 11000))
 
   it('partition has only 3 nodes', done => {
     baseNode.partition('partition 1').info((err, info) => {
       expect(!err).to.be.true()
-      expect(info.source).to.match(/^\/ip4\/.*\/p\/partition 1$/)
-      peerCount = info.peers.length
+      expect(info.subnode.source).to.match(/^\/ip4\/.*\/p\/partition 1$/)
+      peerCount = info.subnode.peers.length
       expect(peerCount).to.equal(3)
       done()
     })
