@@ -18,7 +18,7 @@ const CLIENT_TIMEOUT_MS = 10000 // TODO: take this down
 describe('borough cluster topology changes', () => {
   let working = true
   let baseNode
-  let nodes = [0, 1, 2, 3, 4, 5, 6, 7, 8]
+  let nodes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
   let peerCount
   let counter = 0
 
@@ -100,8 +100,7 @@ describe('borough cluster topology changes', () => {
 
       function onTimeout () {
         console.error('REQUEST TIMEOUT')
-        throw new Error('request timeout')
-        // process.exit(1)
+        process.nextTick(() => { throw new Error('request timeout') })
       }
     }
   })
@@ -162,6 +161,8 @@ describe('borough cluster topology changes', () => {
     expect(counter).to.be.least(minimum)
     done()
   })
+
+  return;
 
   it('rails out nodes', {timeout: (nodes.length * 2) * 11000}, done => {
     let count = nodes.length + 1
