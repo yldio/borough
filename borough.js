@@ -96,9 +96,9 @@ class Borough extends EventEmitter {
 
   _stopNetwork (done) {
     if (this._network) {
-      debug('stopping network..')
+      debug('%s: stopping network..', this.whoami())
       this._network.passive.once('closed', err => {
-        debug('network stopped', err)
+        debug('%s: network stopped', this.whoami(), err)
         done(err)
       })
       this._network.active.end()
@@ -128,10 +128,8 @@ class Borough extends EventEmitter {
 
   _stopCluster (done) {
     debug('stopping cluster..')
-    console.log('stopping cluster..')
     this._cluster.stop(err => {
       debug('cluster stopped', err)
-      console.log('cluster stopped', err)
       done(err)
     })
   }
@@ -310,7 +308,7 @@ class Borough extends EventEmitter {
     if (node) {
       delete this._partitions[partition]
       node.then(node => {
-        node.removeAllListeners()
+        node.removeAllListeners('warning')
         node.stop(done)
       },
       done)

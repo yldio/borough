@@ -44,6 +44,7 @@ describe('borough cluster topology changes', () => {
       }
     })
     baseNode.on('request', onRequest)
+    baseNode.on('warning', throwError)
     baseNode.start(done)
   })
 
@@ -100,7 +101,15 @@ describe('borough cluster topology changes', () => {
 
       function onTimeout () {
         console.error('REQUEST TIMEOUT')
-        process.nextTick(() => { throw new Error('request timeout') })
+        if (working) {
+          throw new Error('request timeout')
+        }
+      }
+
+      function handleError (err) {
+        if (working) {
+          throw err
+        }
       }
     }
   })
@@ -113,7 +122,11 @@ describe('borough cluster topology changes', () => {
         done => {
           async.each(nodes, (node, done) => {
             if ((typeof node) === 'object') {
-              node.stop(done)
+              console.log('stopping %s', node.whoami())
+              node.stop((err) => {
+                console.log('stopped %s', node.whoami(), err)
+                done(err)
+              })
             } else {
               done()
             }
@@ -138,13 +151,14 @@ describe('borough cluster topology changes', () => {
             }
           })
           newNode.on('request', onRequest)
+          newNode.on('warning', throwError)
           newNode.start(done)
-        }, 10000)
+        }, 8000)
       },
       done)
   })
 
-  it('waits a bit', {timeout: 12000}, done => timers.setTimeout(done, 11000))
+  it('waits a bit', {timeout: 6000}, done => timers.setTimeout(done, 5000))
 
   it('partition has only 3 nodes', done => {
     baseNode.partition('partition 1').info((err, info) => {
@@ -162,17 +176,16 @@ describe('borough cluster topology changes', () => {
     done()
   })
 
-  return;
-
   it('rails out nodes', {timeout: (nodes.length * 2) * 11000}, done => {
     let count = nodes.length + 1
     async.eachSeries(
-      nodes.slice(1), // all but the first node
+      nodes.slice(1),
       (node, done) => {
         timers.setTimeout(() => {
           count --
           console.log('\n\nstopping node %d...\n\n\n', count)
           node.stop(err => {
+            console.log('\n\nstopped.')
             if (err) {
               done(err)
             } else {
@@ -180,10 +193,24 @@ describe('borough cluster topology changes', () => {
               done()
             }
           })
-        }, 10000)
+        }, 12000)
       },
       done)
   })
 
   it('waits a bit', {timeout: CLIENT_TIMEOUT_MS + 1000}, done => timers.setTimeout(done, CLIENT_TIMEOUT_MS + 500))
+
+  // it('partition has only 2 nodes', done => {
+  //   baseNode.partition('partition 1').info((err, info) => {
+  //     expect(!err).to.be.true()
+  //     peerCount = info.subnode.peers.length
+  //     expect(peerCount).to.equal(2)
+  //     done()
+  //   })
+  // })
+
 })
+
+function throwError (err) {
+  throw err
+}
