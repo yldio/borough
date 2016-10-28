@@ -4,7 +4,7 @@
   "description": "Borough",
   "main": "borough.js",
   "scripts": {
-    "test": "lab -v",
+    "test": "lab test/borough-one-node.js && lab test/borough-cluster-comms.js && lab test/borough-cluster-partition-data.js && lab test/borough-other-partition-data.js && lab test/borough-topology-changes.js",
     "style": "eslint ."
   },
   "repository": {
@@ -29,13 +29,14 @@
   "dependencies": {
     "async": "^2.0.1",
     "clone-deep": "^0.2.4",
+    "debounce": "^1.0.0",
     "debug": "^2.2.0",
     "deepmerge": "^0.2.10",
     "freeport": "^1.0.5",
     "multiaddr": "^2.0.3",
     "network-address": "^1.1.0",
     "once": "^1.4.0",
-    "skiff": "^1.9.0",
+    "skiff": "^1.10.0",
     "upring": "^0.11.0"
   },
   "pre-commit": [

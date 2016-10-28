@@ -7,6 +7,7 @@ const merge = require('deepmerge')
 const Skiff = require('skiff')
 const freeport = require('freeport')
 const clone = require('clone-deep')
+const debounce = require('debounce')
 
 const Cluster = require('./lib/cluster')
 const Subnode = require('./lib/subnode')
@@ -66,10 +67,12 @@ class Borough extends EventEmitter {
     })
     this._cluster = new Cluster(this, options)
 
+    const debouncedTopologyChange = debounce(this._onTopologyChange.bind(this), 100)
+
     this._cluster.start(done)
     this._cluster.on('error', err => this.emit('error', err))
-    this._cluster.on('peerUp', this._onTopologyChange.bind(this))
-    this._cluster.on('peerDown', this._onTopologyChange.bind(this))
+    this._cluster.on('peerUp', debouncedTopologyChange)
+    this._cluster.on('peerDown', debouncedTopologyChange)
   }
 
   _startNetwork (done) {
@@ -245,7 +248,7 @@ class Borough extends EventEmitter {
   }
 
   _createPartitionSubnode (partition, options, done) {
-    debug('%s: create partition subnode: %s', this.whoami(), partition)
+    debug('%s: create partition subnode: %s, options: %j', this.whoami(), partition, options)
     const self = this
 
     this._partitions[partition] = new Promise((resolve, reject) => {
@@ -264,16 +267,16 @@ class Borough extends EventEmitter {
         })
       }
 
-      function create(peers) {
+      function create (peers) {
         debug('%s: peer subnode addresses for partition %s: %j', self.whoami(), partition, peers)
-        const options = merge(self._options.subnode, { peers })
+        const subnodeOptions = merge(self._options.subnode, { peers })
         const subnode = new Subnode(
           self,
           self._address,
           partition,
           self._network,
           self._cluster,
-          options)
+          subnodeOptions)
 
         subnode.on('warning', self.emit.bind(self, 'warning'))
 

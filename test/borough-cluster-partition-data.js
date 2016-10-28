@@ -24,11 +24,12 @@ describe('borough cluster partition data', () => {
         }
       }
     })
+    baseNode.on('request', onRequest)
     baseNode.start(done)
   })
 
   before(done => {
-    nodes = nodes.slice(1).map((index) => Borough({
+    nodes = nodes.map((index) => Borough({
       base: [baseNode.whoami()],
       subnode: {
         skiff: {
@@ -44,7 +45,7 @@ describe('borough cluster partition data', () => {
   })
 
   after(done => {
-    async.each(nodes, (node, cb) => node.stop(cb), done)
+    async.each(nodes.concat(baseNode), (node, cb) => node.stop(cb), done)
   })
 
   it('can setup a request handler', done => {
@@ -52,18 +53,6 @@ describe('borough cluster partition data', () => {
       node.on('request', onRequest)
     })
     done()
-
-    function onRequest (req, reply) {
-      expect(req.partition.name).to.equal('partition 1')
-      const body = req.body
-      if (body.type === 'put') {
-        req.partition.put(body.key, body.value, reply)
-      } else if (body.type === 'get') {
-        req.partition.get(body.key, reply)
-      } else {
-        reply(new Error('command type not found'))
-      }
-    }
   })
 
   it('can make a put request from a random node', { timeout: 10000 }, done => {
@@ -80,3 +69,15 @@ describe('borough cluster partition data', () => {
     })
   })
 })
+
+function onRequest (req, reply) {
+  expect(req.partition.name).to.equal('partition 1')
+  const body = req.body
+  if (body.type === 'put') {
+    req.partition.put(body.key, body.value, reply)
+  } else if (body.type === 'get') {
+    req.partition.get(body.key, reply)
+  } else {
+    reply(new Error('command type not found'))
+  }
+}
