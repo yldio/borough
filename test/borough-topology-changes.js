@@ -85,7 +85,7 @@ describe('borough cluster topology changes', () => {
           }
           process.stdout.write('.')
           expect(err).to.be.null()
-          expect(resp).to.equal(lastValue)
+          expect(Number(resp)).to.equal(lastValue)
           process.nextTick(request)
         })
       } else {
@@ -211,5 +211,5 @@ describe('borough cluster topology changes', () => {
 })
 
 function logError (err) {
-  console.error(err.stack)
+  console.error('Warning: ' + err.stack)
 }

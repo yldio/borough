@@ -43,7 +43,7 @@ class Borough extends EventEmitter {
       ],
       err => {
         this._startState = 'started'
-        debug('started: %j', err)
+        debug('%s started: %j', this.whoami(), err)
         done(err)
       })
   }
