@@ -48,10 +48,13 @@ const options = {
 const node = Borough(options)
 ```
 
-Options:
+Options:+
 
-* base (array, defaults to []): The other peers that constitute the initial cluster.
-* TODO: rest
+* base (array, defaults to []): the address of one or more peers to form the cluster from.
+* cluster (object): contains the following attributes:
+  - name (string, defaults to "borough"): the name of the cluster we're creating. Nodes participating on the same cluster will  need to have the same cluster name
+
+See [all options and defaults here](lib/default-options.js).
 
 # node
 
