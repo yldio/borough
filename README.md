@@ -61,7 +61,7 @@ Start the node. Invokes callback when successful or when an error occurs, with a
 
 ## node.partition (partition)
 
-Returns a partition instance
+Returns a partition instance, which is a [LevelDown](https://github.com/level/leveldown#readme) instance.
 
 ## node.request (partition, payload, callback)
 
@@ -101,6 +101,8 @@ Access a different, (probably remote) partition. Returns a partition object.
 
 # Partition
 
+The partition exposed as [a LevelDown-compatible interface](https://github.com/level/leveldown#readme).
+
 ## partition.name
 
 Contains the name of the partition.
@@ -112,6 +114,10 @@ Reads a partition value from a key.
 ## partition.put(key, value, callback)
 
 Writes a partition value into the specified key.
+
+## partition.iterator(options)
+
+Gets an iterator
 
 ## partition.info(callback)
 

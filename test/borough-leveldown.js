@@ -9,6 +9,8 @@ const expect = require('code').expect
 
 const async = require('async')
 const Memdown = require('memdown')
+const IteratorStream = require('level-iterator-stream')
+const ConcatStream = require('concat-stream')
 
 const Borough = require('../')
 
@@ -71,7 +73,7 @@ describe('borough partition leveldown interface', () => {
 
   it('can make a del request from a random node', done => {
     const node = nodes[nodes.length - 2]
-    node.request('partition 1', {type: 'del', key: 'a' }, (err, result) => {
+    node.request('partition 1', { type: 'del', key: 'a' }, (err, result) => {
       expect(!err).to.be.true()
       done()
     })
@@ -79,7 +81,7 @@ describe('borough partition leveldown interface', () => {
 
   it('can make a get request from a random node', done => {
     const node = nodes[nodes.length - 1]
-    node.request('partition 1', {type: 'get', key: 'a'}, (err, result) => {
+    node.request('partition 1', { type: 'get', key: 'a' }, (err, result) => {
       expect(!!err).to.be.true()
       expect(err.message).to.equal('Key not found in database')
       done()
@@ -93,7 +95,7 @@ describe('borough partition leveldown interface', () => {
       { type: 'put', key: 'b', value: 'd' },
       { type: 'put', key: 'c', value: 'e' }
     ]
-    node.request('partition 1', {type: 'batch', array }, (err, result) => {
+    node.request('partition 1', { type: 'batch', array }, (err, result) => {
       expect(!err).to.be.true()
       done()
     })
@@ -116,19 +118,41 @@ describe('borough partition leveldown interface', () => {
       done()
     })
   })
+
+  it('can create iterator', done => {
+    const node = nodes[nodes.length - 1]
+    node.request('partition 1', { type: 'read stream' }, (err, reply) => {
+      expect(!err).to.be.true()
+      reply.streams.read.pipe(ConcatStream(results => {
+        expect(results).to.equal([
+          {key: 'a', value: 'c'},
+          {key: 'b', value: 'd'},
+          {key: 'c', value: 'e'}])
+        done()
+      }))
+    })
+  })
 })
 
 function onRequest (req, reply) {
   expect(req.partition.name).to.equal('partition 1')
   const body = req.body
+  const key = body.key
+  const value = body.value
   if (body.type === 'put') {
-    req.partition.put(body.key, body.value, reply)
+    req.partition.put(key, value, reply)
   } else if (body.type === 'get') {
-    req.partition.get(body.key, reply)
+    req.partition.get(key, reply)
   } else if (body.type === 'del') {
-    req.partition.del(body.key, reply)
+    req.partition.del(key, reply)
   } else if (body.type === 'batch') {
     req.partition.batch(body.array, reply)
+  } else if (body.type === 'read stream') {
+    reply(null, {
+      streams: {
+        read: IteratorStream(req.partition.iterator(body.options))
+      }
+    })
   } else {
     reply(new Error('command type not found'))
   }

@@ -13,6 +13,7 @@ const Cluster = require('./lib/cluster')
 const Subnode = require('./lib/subnode')
 const Request = require('./lib/request')
 const Partition = require('./lib/partition')
+const Iterator = require('./lib/iterator')
 const defaultOptions = require('./lib/default-options')
 
 class Borough extends EventEmitter {
@@ -211,13 +212,15 @@ class Borough extends EventEmitter {
         } else {
           this._partitions[partition].then(
             sn => done(null, sn),
-            err => done(err))
+            done)
         }
       })
     } else {
       subnode.then(
-        sn => done(null, sn),
-        err => done(err))
+        sn => {
+          done(null, sn)
+        },
+        done)
     }
   }
 
@@ -361,6 +364,25 @@ class Borough extends EventEmitter {
 
   partition (partition) {
     return new Partition(partition, this)
+  }
+
+  iterator (db, partition, options) {
+    return new Iterator(db, this._cluster, partition, options)
+  }
+
+  localReadStream (partition, options, reply) {
+    debug('local read stream for partition %s, options = %j', partition, options)
+    this.partitionSubnode(partition, {}, (err, subnode) => {
+      if (err) {
+        reply(err)
+      } else {
+        reply(null, {
+          streams: {
+            read: subnode.readStream(options)
+          }
+        })
+      }
+    })
   }
 }
 
