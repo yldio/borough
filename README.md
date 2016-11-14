@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/pgte/borough.svg?branch=master)](https://travis-ci.org/pgte/borough)
+
 ![Borough](borough.png)
 
     Partitioned, fault-tolerant and survivable database and application server.
