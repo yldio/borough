@@ -171,7 +171,7 @@ describe('borough cluster topology changes', () => {
   })
 
   it('a big amount of requests were performed', done => {
-    const minimum = 500 * nodes.length
+    const minimum = 200 * nodes.length
     expect(counter).to.be.least(minimum)
     done()
   })
